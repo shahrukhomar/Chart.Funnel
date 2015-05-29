@@ -17,19 +17,20 @@
     };
 
     Chart.Trapezoid = Chart.Element.extend({
-        draw: function() {
-            var ctx = this.ctx;
-            ctx.save();
+        initialize: function() {
             // adjusted width when there are angles. These widths are euqal to
             // the base of the trapezoid
-            var halfStroke = this.strokeWidth / 2;
-
-            ctx.fillStyle = this.fillColor;
-            ctx.strokeStyle = this.strokeColor;
-            ctx.lineWidth = this.strokeWidth;
-
             this.xl = this.leftT > 0 ? this.height * Math.tan(this.leftT) : 0;
             this.xr = this.rightT > 0 ? this.height * Math.tan(this.rightT) : 0;
+        },
+        draw: function() {
+            var halfStroke  = this.strokeWidth / 2;
+            var ctx         = this.ctx;
+            ctx.save();
+
+            ctx.fillStyle   = this.fillColor;
+            ctx.strokeStyle = this.strokeColor;
+            ctx.lineWidth   = this.strokeWidth;
 
             ctx.translate(this.x, this.y + halfStroke);
             ctx.beginPath();
