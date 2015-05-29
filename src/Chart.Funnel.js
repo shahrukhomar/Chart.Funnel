@@ -9,9 +9,8 @@
     var defaultConfig = {
         //Number - Funnel top width as fraction of the chart conainer width
         widthTop: 0.75,
-
         //Number - Funnel bottom width as fraction of the chart conainer width
-        widthBottom: 0.2,
+        widthBottom: 0.25,
 
         //Nunber - Height as fraction of chart container height
         height: 0.9,
@@ -50,10 +49,16 @@
                 y : this.y + (this.height/2)
             };
         },
+        update: function(newProps) {
+            newProps.xl = this.leftT > 0 ? newProps.height * Math.tan(this.leftT) : 0;
+            newProps.xr = this.rightT > 0 ? newProps.height * Math.tan(this.rightT) : 0;
+            Chart.Element.prototype.update.call(this, newProps);
+        },
 
         draw: function() {
             var halfStroke  = this.strokeWidth / 2;
             var ctx         = this.ctx;
+
             ctx.save();
 
             ctx.fillStyle   = this.fillColor;
@@ -210,7 +215,56 @@
         },
 
         reflow : function(){
+            this.widthTop    = this.chart.width * this.defaults.widthTop;
+            this.widthBottom = this.chart.width * this.defaults.widthBottom;
+            this.height      = this.chart.height * this.defaults.height;
+            this.originX     = (this.chart.width - this.widthTop) / 2;
+            this.originY     = (this.chart.height - this.height) / 2;
 
+            // height for each segment when using equal height segments
+            this.segmentHeight = this.height / this.segments.length;
+
+            // collated segment heights
+            var segmentHeightTotal = 0;
+
+            helpers.each(this.segments, function(segment) {
+                var segmentWidth = this.getSegmentWidth(this.widthTop, this.tt, segmentHeightTotal, this.segmentHeight);
+
+                if (Object.prototype.toString.call(segment) === '[object Array]') {
+                    var sectionValueTotal = 0;
+                    var sectionWidthTotal = 0;
+
+                    // individual section width will be a percent so we need to calculate
+                    // the total value for all sections within this segment first
+                    helpers.each(segment, function(section) {
+                        sectionValueTotal += section.value;
+                    });
+
+                    helpers.each(segment, function(section) {
+                        var sectionWidth = (segmentWidth / sectionValueTotal) * section.value;
+                        section.update({
+                            x: this.originX + sectionWidthTotal + this.getSegmentOffset(this.tt, segmentHeightTotal),
+                            y: this.originY + segmentHeightTotal,
+                            height: this.segmentHeight,
+                            width: sectionWidth
+                        });
+
+                        if (section.leftT > 0) {
+                            sectionWidthTotal += this.segmentHeight * this.tt;
+                        }
+
+                        sectionWidthTotal += sectionWidth;
+                    }, this)
+                } else {
+                    segment.update({
+                        x: this.originX + this.getSegmentOffset(this.tt, segmentHeightTotal),
+                        y: this.originY + segmentHeightTotal,
+                        height: this.segmentHeight,
+                        width: this.getSegmentWidth(this.widthTop, this.tt, segmentHeightTotal, this.segmentHeight)
+                    })
+                }
+                segmentHeightTotal += this.segmentHeight;
+            }, this);
         },
 
         draw : function(easeDecimal){
