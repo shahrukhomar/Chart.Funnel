@@ -7,13 +7,28 @@
         helpers = Chart.helpers;
 
     var defaultConfig = {
+        //Number - Funnel top width as fraction of the chart conainer width
         widthTop: 0.75,
+
+        //Number - Funnel bottom width as fraction of the chart conainer width
         widthBottom: 0.2,
+
+        //Nunber - Height as fraction of chart container height
         height: 0.9,
+
+        //String - Standard stroke colour for the funnel segments
         strokeColor: '#FFFFFF',
-        fillColor: '#F7464A',
+
+        //String - Standard fill colour for funnel segments
+        fillColor: '#000000',
+
+        //Number - Segment/Section stroke size
         strokeWidth: 1,
+
+        //Boolean - Whether we should show each funnel segment as equal height
         equalHeight: true,
+
+        //Number - Funnel type does not support animation
         animationSteps : 0,
     };
 
@@ -102,6 +117,7 @@
                 if (segment.hasOwnProperty('sections')) {
                     var sectionValueTotal = 0;
                     var sectionWidthTotal = 0;
+                    var sections          = [];
 
                     // individual section width will be a percent so we need to calculate
                     // the total value for all sections within this segment first
@@ -134,8 +150,10 @@
                         }
 
                         sectionWidthTotal += sectionConfig.width;
-                        this.segments.push(new this.wedgeClass(sectionConfig))
+                        sections.push(new this.wedgeClass(sectionConfig));
                     }, this);
+
+                    this.segments.push(sections);
                 } else {
                     this.segments.push(new this.wedgeClass({
                             x: this.originX + this.getSegmentOffset(this.tt, segmentHeightTotal),
@@ -169,10 +187,15 @@
 
         getSegmentsAtEvent : function(e){
             var segmentsArray = [];
-
             var location = helpers.getRelativePosition(e);
-            helpers.each(this.segments, function(segment){
-                if (segment.inRange(location.x,location.y)) segmentsArray.push(segment);
+            helpers.each(this.segments, function(segment) {
+                if (Object.prototype.toString.call(segment) === '[object Array]') {
+                    helpers.each(segment, function(section) {
+                        if (section.inRange(location.x,location.y)) segmentsArray.push(section);
+                    })
+                } else {
+                    if (segment.inRange(location.x,location.y)) segmentsArray.push(segment);
+                }
             },this);
 
             return segmentsArray;
@@ -193,7 +216,13 @@
         draw : function(easeDecimal){
             this.clear();
             helpers.each(this.segments, function(segment) {
-                segment.draw();
+                if (Object.prototype.toString.call(segment) === '[object Array]') {
+                    helpers.each(segment, function(section) {
+                        section.draw();
+                    })
+                } else {
+                    segment.draw();
+                }
             });
         }
     });
