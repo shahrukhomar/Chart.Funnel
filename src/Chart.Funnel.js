@@ -23,6 +23,11 @@
             this.xl = this.leftT > 0 ? this.height * Math.tan(this.leftT) : 0;
             this.xr = this.rightT > 0 ? this.height * Math.tan(this.rightT) : 0;
         },
+
+        inRange: function(chartX, chartY) {
+            return (chartX >= this.x + this.xl && chartX <= this.x + this.xl + this.width) && (chartY >= this.y && chartY <= this.y + this.height);
+        },
+
         draw: function() {
             var halfStroke  = this.strokeWidth / 2;
             var ctx         = this.ctx;
@@ -62,6 +67,14 @@
 
             this.segments    = [];
 
+            if (this.options.showTooltips){
+                helpers.bindEvents(this, this.options.tooltipEvents, function(evt) {
+                    var activeSegments = (evt.type !== 'mouseout') ? this.getSegmentsAtEvent(evt) : [];
+                    // var activeBars = this.segme;
+                    this.showTooltip(activeSegments);
+                });
+            }
+
             this.wedgeClass = Chart.Trapezoid.extend({
                 ctx: this.chart.ctx,
                 fillColor: this.defaults.fillColor,
@@ -96,7 +109,9 @@
                             width: (segmentWidth / sectionValueTotal) * section.value,
                             leftT: 0,
                             rightT: 0,
-                            fillColor: section.color
+                            fillColor: section.color,
+                            label : section.label || null,
+                            value : section.value,
                         };
 
                         if (sectionIndex === 0) {
@@ -121,7 +136,9 @@
                             width: this.getSegmentWidth(this.widthTop, this.tt, segmentHeightTotal, this.segmentHeight),
                             leftT: this.t,
                             rightT: this.t,
-                            fillColor: segment.color
+                            fillColor: segment.color,
+                            label : segment.label || null,
+                            value : segment.value
                         })
                     )
                 }
@@ -146,36 +163,11 @@
             var segmentsArray = [];
 
             var location = helpers.getRelativePosition(e);
-            helpers.each(this.segments,function(segment){
-                if (this.inRange(location.x,location.y, segment)) segmentsArray.push(segment);
+            helpers.each(this.segments, function(segment){
+                if (segment.inRange(location.x,location.y)) segmentsArray.push(segment);
             },this);
 
             return segmentsArray;
-        },
-
-        inRange : function(chartX,chartY, segment){
-            var pointRelativePosition = helpers.getAngleFromPoint(segment, {
-                x: chartX,
-                y: chartY
-            });
-
-            var distanceFromXCenter = chartX - segment.x,
-                distanceFromYCenter = chartY - segment.y;
-
-            // helpers.getAngleFromPoint assumes Chart.Arc to start from PI/2 (90Deg)
-            // and will therefore adjust the angle for hit point in the top-left
-            // quadrant by 2PI. Gauge however assumes starting point from radian
-            // 0 and needs to remove this adjustment
-            if (distanceFromXCenter < 0 && distanceFromYCenter < 0){
-                pointRelativePosition.angle -= Math.PI*2;
-            }
-
-            //Check if within the range of the open/close angle
-            var betweenAngles = (pointRelativePosition.angle >= segment.startAngle && pointRelativePosition.angle <= segment.endAngle),
-                withinRadius = (pointRelativePosition.distance >= segment.innerRadius && pointRelativePosition.distance <= segment.outerRadius);
-
-            return (betweenAngles && withinRadius);
-            //Ensure within the outside of the arc centre, but inside arc outer
         },
 
         update : function(){
