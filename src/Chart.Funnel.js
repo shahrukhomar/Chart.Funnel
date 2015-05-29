@@ -21,6 +21,9 @@
         //String - Standard fill colour for funnel segments
         fillColor: '#000000',
 
+        //String - Standard fill colour for funnel segment labels
+        labelColor: '#888888',
+
         //Number - Segment/Section stroke size
         strokeWidth: 1,
 
@@ -71,8 +74,16 @@
             ctx.lineTo(this.xl, this.height - halfStroke);
             ctx.lineTo(this.xl + this.width, this.height - halfStroke);
             ctx.lineTo(this.xl + this.xr + this.width, 0);
+            ctx.closePath();
             ctx.fill();
             ctx.stroke();
+            if (this.segmentLabel) {
+                ctx.fillStyle = this.labelColor;
+                ctx.font = "10px sans-serif";
+                ctx.textBaseline = "middle";
+                ctx.textAlign = "left";
+                ctx.fillText(this.segmentLabel, this.xl + this.xr + this.width, this.height/2);
+            }
             ctx.restore();
         }
     });
@@ -85,10 +96,10 @@
         //Initialize is fired when the chart is initialized - Data is passed in as a parameter
         //Config is automatically merged by the core of Chart.js, and is available at this.options
         initialize:  function(data){
-            this.widthTop    = this.chart.width * this.defaults.widthTop;
-            this.widthBottom = this.chart.width * this.defaults.widthBottom;
-            this.height      = this.chart.height * this.defaults.height;
-            this.originX     = (this.chart.width - this.widthTop) / 2;
+            this.widthTop    = this.chart.width * this.options.widthTop;
+            this.widthBottom = this.chart.width * this.options.widthBottom;
+            this.height      = this.chart.height * this.options.height;
+            this.originX     = 0;
             this.originY     = (this.chart.height - this.height) / 2;
             this.t           = Math.atan((this.widthTop - this.widthBottom)/(2 * this.height));
             this.tt          = Math.tan(this.t);
@@ -105,9 +116,10 @@
 
             this.wedgeClass = Chart.Trapezoid.extend({
                 ctx: this.chart.ctx,
-                fillColor: this.defaults.fillColor,
-                strokeColor: this.defaults.strokeColor,
-                strokeWidth: this.defaults.strokeWidth
+                fillColor: this.options.fillColor,
+                strokeColor: this.options.strokeColor,
+                strokeWidth: this.options.strokeWidth,
+                labelColor: this.options.labelColor
             });
 
             // height for each segment when using equal height segments
@@ -139,6 +151,7 @@
                             leftT: 0,
                             rightT: 0,
                             fillColor: section.color,
+                            segmentLabel: null,
                             label : section.label || null,
                             value : section.value,
                         };
@@ -152,6 +165,7 @@
 
                         if ((sectionIndex + 1) === segment.sections.length) {
                             sectionConfig.rightT = this.t;
+                            sectionConfig.segmentLabel = segment.label;
                         }
 
                         sectionWidthTotal += sectionConfig.width;
@@ -168,6 +182,7 @@
                             leftT: this.t,
                             rightT: this.t,
                             fillColor: segment.color,
+                            segmentLabel: segment.label || null,
                             label : segment.label || null,
                             value : segment.value
                         })
@@ -215,10 +230,10 @@
         },
 
         reflow : function(){
-            this.widthTop    = this.chart.width * this.defaults.widthTop;
-            this.widthBottom = this.chart.width * this.defaults.widthBottom;
-            this.height      = this.chart.height * this.defaults.height;
-            this.originX     = (this.chart.width - this.widthTop) / 2;
+            this.widthTop    = this.chart.width * this.options.widthTop;
+            this.widthBottom = this.chart.width * this.options.widthBottom;
+            this.height      = this.chart.height * this.options.height;
+            this.originX     = 0;
             this.originY     = (this.chart.height - this.height) / 2;
 
             // height for each segment when using equal height segments
