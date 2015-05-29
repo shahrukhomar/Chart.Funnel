@@ -9,11 +9,12 @@
     var defaultConfig = {
         widthTop: 0.75,
         widthBottom: 0.2,
-        height: 0.8,
+        height: 0.9,
         strokeColor: '#FFFFFF',
         fillColor: '#F7464A',
         strokeWidth: 1,
-        equalHeight: true
+        equalHeight: true,
+        animationSteps : 0,
     };
 
     Chart.Trapezoid = Chart.Element.extend({
@@ -26,6 +27,13 @@
 
         inRange: function(chartX, chartY) {
             return (chartX >= this.x + this.xl && chartX <= this.x + this.xl + this.width) && (chartY >= this.y && chartY <= this.y + this.height);
+        },
+
+        tooltipPosition : function(){
+            return {
+                x : this.x + ((this.xl + this.xr + this.width)/2),
+                y : this.y + (this.height/2)
+            };
         },
 
         draw: function() {
@@ -183,6 +191,7 @@
         },
 
         draw : function(easeDecimal){
+            this.clear();
             helpers.each(this.segments, function(segment) {
                 segment.draw();
             });
