@@ -59,24 +59,24 @@
         },
 
         draw: function() {
-            var halfStroke  = this.strokeWidth / 2,
-                ctx         = this.ctx;
+            var ctx = this.ctx;
 
             ctx.save();
 
             ctx.fillStyle   = this.fillColor;
             ctx.strokeStyle = this.strokeColor;
-            ctx.lineWidth   = halfStroke;
+            ctx.lineWidth   = this.strokeWidth;
 
-            ctx.translate(this.x, this.y + halfStroke);
+            ctx.translate(this.x + 0.5, this.y + 0.5);
             ctx.beginPath();
-            ctx.moveTo(0 + halfStroke, 0)
-            ctx.lineTo(this.xl + halfStroke, this.height - halfStroke);
-            ctx.lineTo(this.xl + this.width, this.height - halfStroke);
+            ctx.moveTo(0, 0)
+            ctx.lineTo(this.xl, this.height);
+            ctx.lineTo(this.xl + this.width, this.height);
             ctx.lineTo(this.xl + this.xr + this.width, 0);
             ctx.closePath();
             ctx.fill();
-            ctx.stroke();
+            this.strokeWidth && ctx.stroke();
+
             if (this.segmentLabel) {
                 ctx.fillStyle = this.labelColor;
                 ctx.font = "10px sans-serif";
